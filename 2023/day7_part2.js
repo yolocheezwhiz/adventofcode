@@ -1,3 +1,4 @@
+//RUN FROM adventofcode.com/2023
 let response = await fetch("https://adventofcode.com/2023/day/7/input");
 let txt = await response.text();
 let inputs = txt.trim().split("\n");
