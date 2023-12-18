@@ -7,7 +7,6 @@ let best = Infinity;
 let part = 1;
 
 //create a graph representing all y,x pos that can be reached vertically (_v) or horizontally (_h) in N_min, N_max turns.
-//this graph can now be used with Dijkstra, as the max length of N_max is now embedded in the graph itself. 
 //for example, pos 0,0 doesn't have a single neighbor to its right, it has three: 0,1 0,2 and 0,3. 
 //if we decide to go to 0,1 we HAVE to move vertically next.
 
