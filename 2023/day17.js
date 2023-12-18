@@ -64,12 +64,12 @@ function build_graph(range_min, range_max) {
   //Begin eval, using every vertical and horizontal neighbors of 0,0
   starting_neighbors = Object.keys(starting_obj);
   for (let i = 0; i < starting_neighbors.length; i++) {
-    walk(starting_neighbors[i], starting_obj[starting_neighbors[i]], "0,0");
+    walk(starting_neighbors[i], starting_obj[starting_neighbors[i]]);
   }
 }
 
 //pass the whole neighbor object, and the path length to date
-function walk(neighbor, cumul, from) {
+function walk(neighbor, cumul) {
   //if we already made it to this node in a shorter path, no need to proceed
   //we also stop if we already found a solution (vertically or horizontally) that is shorter than the current attempt
   if (cumul >= Math.min(graph[neighbor].least, best)) {
@@ -91,7 +91,7 @@ function walk(neighbor, cumul, from) {
     //we reached a node in the shortest path to date. we will try all possible directions for it.  
     let n = Object.keys(graph[neighbor].neighbors);
     for (let i = 0; i < n.length; i++) {
-      walk(n[i], cumul + graph[neighbor].neighbors[n[i]], neighbor);
+      walk(n[i], cumul + graph[neighbor].neighbors[n[i]]);
     }
     return;
   }
