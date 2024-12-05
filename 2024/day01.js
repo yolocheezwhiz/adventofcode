@@ -5,7 +5,6 @@ const headers = new Headers({
 
 // cache puzzle input
 const day = "2024/day/1";
-const now = Date.now();
 localStorage[day] = localStorage[day] || (await(await fetch("https://adventofcode.com/" + day + "/input", {
     headers: headers
 })).text()).trim();
