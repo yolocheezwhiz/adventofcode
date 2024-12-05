@@ -4,7 +4,6 @@ const headers = new Headers({
     "User-Agent": "github.com/yolocheezwhiz/adventofcode/"
 });
 const day = "2024/day/2";
-const now = Date.now();
 localStorage[day] = localStorage[day] || (await(await fetch("https://adventofcode.com/" + day + "/input", {
     headers: headers
 })).text()).trim();
