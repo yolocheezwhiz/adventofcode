@@ -34,4 +34,4 @@ multiply(input, 'p1');
 // finally, we join back together the valid instructions and rerun part one
 const filteredInput = ("do()" + input).split("don't()").flatMap(elem => elem.split("do()").slice(1)).join();
 multiply(filteredInput, 'p2');
-console.log('solved in ' + (Date.now() - now) + ' ms.');
+console.log('solved in ' + (Date.now() - startTime) + ' ms.');
