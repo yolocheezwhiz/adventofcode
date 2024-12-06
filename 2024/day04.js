@@ -88,4 +88,4 @@ for (let p = parsedInputs, y = 1; y < len - 1; y++) {
 }
 
 console.log('answer p2: ' + answerp2);
-console.log('solved in ' + (Date.now() - now) + ' ms.');
+console.log('solved in ' + (Date.now() - startTime) + ' ms.');
