@@ -61,4 +61,4 @@ for (let i = 0; i < parsedInputs.length; i++) {
 
 console.log('answer p1: ' + answerp1);
 console.log('answer p2: ' + answerp2);
-console.log('solved in ' + (Date.now() - now) + ' ms.')
+console.log('solved in ' + (Date.now() - startTime) + ' ms.')
