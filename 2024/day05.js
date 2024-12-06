@@ -44,7 +44,7 @@ updates.forEach(update => {
         // which never appears as a left-hand side value in the rules
         let sortedKeys = Object.keys(rulesThatApply).sort(function (a, b) { return rulesThatApply[b] - rulesThatApply[a] });
         // if the last page was in the sorted keys, it'd be 0.5 * (sortedKeys.length - 1)
-        // but since that page is the in the sorted keys, we omit the -1 part.
+        // but since that page is not in the sorted keys, we omit the -1 part.
         answerp2 += +sortedKeys[0.5 * (sortedKeys.length)];
     }
 });
