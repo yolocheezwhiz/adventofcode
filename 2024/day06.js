@@ -42,11 +42,12 @@ function walk(p2Set, pos, dir, map) {
         if (!p2Set) answerp1.add(posKey);
         // Part 2
         // If the position has already been visited from this direction, we increment part 2 answer and exit the nested loop
-        else if (p2Set.has(posDirKey)) {
+        else if (!dir && p2Set.has(posDirKey)) {
             answerp2++;
             break;
-            // We add to the visited positions in this nested loop
-        } else p2Set.add(posDirKey);
+
+        }
+
         // Regardless of Part
         // Check the next potential position
         nextPos.y = pos.y + moves[dir][0];
@@ -67,7 +68,14 @@ function walk(p2Set, pos, dir, map) {
             pos.y = nextPos.y;
             pos.x = nextPos.x;
             // It's an obstacle, turn right (but stay on the current square)
-        } else dir = (dir + 1) % 4;
+        }
+
+        else {
+            // We add to the visited positions in this nested loop
+            // Only if an obstacle, bumped into going up (reduces computing)
+            if (p2Set && !dir) p2Set.add(posDirKey);
+            dir = (dir + 1) % 4;
+        }
         // Keep looping
     }
     // not really needed since we break out of loops to exit the function but for good measure
@@ -76,4 +84,9 @@ function walk(p2Set, pos, dir, map) {
 walk(p2Set = null, pos, dir, map);
 console.log(`answer part 1: ${answerp1.size}`);
 console.log(`answer part 2: ${answerp2}`);
+// The last big optimization would be to precompute obstacle positions in a linked list. 
+// This would make the code much simpler
+// Run part 1
+// From each position visited in part 1, create a fake obstacle, find it's neighbors in a copy of the linked list
+// zoom zoom zoom
 console.log(`solved in ${Date.now() - startTime} ms`);
