@@ -1,4 +1,4 @@
-// General configuration for adventofcode.com
+// General configuration
 const headers = new Headers({ "User-Agent": "github.com/yolocheezwhiz/adventofcode/" });
 const day = "2024/day/6";
 localStorage[day] = localStorage[day] || (await(await fetch("https://adventofcode.com/" + day + "/input", { headers: headers })).text()).trim();
@@ -6,152 +6,74 @@ const startTime = Date.now();
 
 // Day-specific setup
 const map = localStorage[day].split('\n').map(line => line.split(''));
-let pos = '';
-let direction = '';
-// I'm glad I used this approach for Part 1, it made part 2 quite easy
-const obstacles = new Set();
-const visited = new Set(); // Its size will be part 1's answer
+const moves = [[-1, 0], [0, 1], [1, 0], [0, -1]];
+const answerp1 = new Set();
+const pos = {};
+let answerp2 = 0;
+let dir;
 
-// Convert coordinates to 'y_x' string
-const toKey = (a, b) => `${a}_${b}`;
-// And vice-versa
-const toNums = (y_x) => y_x.split('_').map(Number);
-
-// Functionalized switch-case as it's being used and abused today
-function evalSwitch(key, cases) {
-    return cases[key]();
-}
-
-// Find the next obstacle based on direction from current pos
-function findNextObstacle(pos, direction, obstacles) {
-    const [y, x] = toNums(pos);
-    let nextObstacleDistance = Infinity;
-    let nextObstacle = null;
-    obstacles.forEach(obstacle => {
-        const [oy, ox] = toNums(obstacle);
-        const { condition, distance } = evalSwitch(direction, {
-            '^': () => ({ condition: ox === x && oy < y, distance: Math.abs(oy - y) }),
-            '>': () => ({ condition: oy === y && ox > x, distance: Math.abs(ox - x) }),
-            'v': () => ({ condition: ox === x && oy > y, distance: Math.abs(oy - y) }),
-            '<': () => ({ condition: oy === y && ox < x, distance: Math.abs(ox - x) })
-        });
-        // If the obstacle is in the guard's path, and it's the closest one
-        if (condition && distance < nextObstacleDistance) {
-            // Set as next obstacle
-            nextObstacleDistance = distance;
-            nextObstacle = obstacle;
-        }
-    });
-    return nextObstacle;
-}
-
-// Move the guard up to next obstacle or edge of map
-function move(pos, direction, nextObstacle, visited, bumpedIntoFromDir) {
-
-    // Part 2: Log obstacle bumped into, and from which direction
-    if (bumpedIntoFromDir) {
-        const bumpCount = bumpedIntoFromDir.size;
-        bumpedIntoFromDir.add(toKey(pos, direction));
-        // If bumped into twice, we have an endless loop
-        if (bumpCount === bumpedIntoFromDir.size) return 'break';
-    }
-
-    const [y, x] = toNums(pos);
-    const [ny, nx] = toNums(nextObstacle);
-
-    // Skip during Part 2 for performance
-    if (visited) {
-        // Add to visited positions
-        evalSwitch(direction, {
-            '^': () => { for (let i = y; i > ny; i--) visited.add(toKey(i, x)); },
-            '>': () => { for (let i = x; i < nx; i++) visited.add(toKey(y, i)); },
-            'v': () => { for (let i = y; i < ny; i++) visited.add(toKey(i, x)); },
-            '<': () => { for (let i = x; i > nx; i--) visited.add(toKey(y, i)); }
-        });
-    }
-    // Set new pos
-    return evalSwitch(direction, {
-        '^': () => toKey(ny + 1, nx),
-        '>': () => toKey(ny, nx - 1),
-        'v': () => toKey(ny - 1, nx),
-        '<': () => toKey(ny, nx + 1)
-    });
-}
-
-// Parse map to find starting position and obstacles
-for (let y = 0; y < map.length; y++) {
+// Find the starting position
+outer: for (let y = 0; y < map.length; y++) {
+    let stop;
     for (let x = 0; x < map[y].length; x++) {
-        const z = map[y][x];
-        if (z === '#') obstacles.add(toKey(y, x));
-        else if (z !== '.') {
-            pos = toKey(y, x);
-            direction = z;
+        if (!map[y][x].match(/#|\./)) {
+            pos.y = y;
+            pos.x = x;
+            // Check starting direction
+            dir = '^>v<'.indexOf(map[y][x]);
+            stop = true;
+            break outer;
         }
-        // Here we could be tempted to keep track of all '.' for Part 2
-        // But that would be a lot of looping for no reason
-        // See end of script for a better approach
-        else { }
     }
 }
 
-function solvePuzzle(pos, direction, obstacles, visited, bumpedIntoFromDir) {
+// Walk the map
+function walk(p2Set, pos, dir, map) {
+    const nextPos = {};
+    let posKey, posDirKey;
+    // Loop until the guard exists the map, or gets stuck in an endless loop
     while (true) {
-        // Find next obstacle
-        const nextObstacle = findNextObstacle(pos, direction, obstacles) ||
-            evalSwitch(direction, {
-                '^': () => toKey(-1, toNums(pos)[1]),
-                '>': () => toKey(toNums(pos)[0], map[0].length),
-                'v': () => toKey(map.length, toNums(pos)[1]),
-                '<': () => toKey(toNums(pos)[0], -1)
-            });
-        // Move to it
-        const result = move(pos, direction, nextObstacle, visited, bumpedIntoFromDir);
-
-        // Break out of Part 2's endless loops
-        if (result === 'break') {
+        // Keep track of both the position, and from which direction its been visited
+        posKey = `${pos.y}_${pos.x}`;
+        posDirKey = `${posKey}_${dir}`;
+        // Part 1 
+        // We use the existence of p2Set as an indicator of whether we're in the recursive function or the main one
+        // If in main loop add the position to part 1 answer
+        if (!p2Set) answerp1.add(posKey);
+        // Part 2
+        // If the position has already been visited from this direction, we increment part 2 answer and exit the nested loop
+        else if (p2Set.has(posDirKey)) {
             answerp2++;
             break;
-        }
-        // Set new pos for next loop iteration
-        pos = result;
-
-        // If obstacle is out of bounds, we completed Part 1
-        // (And need to eval another option for Part 2)
-        if (!obstacles.has(nextObstacle)) break;
-
-        // Change direction after hitting an obstacle
-        direction = evalSwitch(direction, {
-            '^': () => '>',
-            '>': () => 'v',
-            'v': () => '<',
-            '<': () => '^'
-        });
+            // We add to the visited positions in this nested loop
+        } else p2Set.add(posDirKey);
+        // Regardless of Part
+        // Check the next potential position
+        nextPos.y = pos.y + moves[dir][0];
+        nextPos.x = pos.x + moves[dir][1];
+        // If out of bounds, exit loop
+        if (nextPos.y < 0 || nextPos.x < 0 || nextPos.y >= map.length || nextPos.x >= map[0].length) break;
+        // Verify it's not an obstacle
+        else if (map[nextPos.y][nextPos.x] !== '#') {
+            // If Part 1 and the next position has not already been visited
+            // (incidentally prevents trying to put an obstacle at the guard's original position)
+            if (!p2Set && !answerp1.has(`${nextPos.y}_${nextPos.x}`)) {
+                // Clone map, change the next pos for an obstacle, recurse for part 2
+                const mapCopy = map.map(line => [...line]);
+                mapCopy[nextPos.y][nextPos.x] = '#';
+                walk(new Set(posDirKey), { ...pos }, dir, mapCopy);
+            }
+            // Set pos to next pos.
+            pos.y = nextPos.y;
+            pos.x = nextPos.x;
+            // It's an obstacle, turn right (but stay on the current square)
+        } else dir = (dir + 1) % 4;
+        // Keep looping
     }
+    // not really needed since we break out of loops to exit the function but for good measure
+    return;
 }
-
-solvePuzzle(pos, direction, obstacles, visited, null);
-console.log('answer p1: ' + visited.size);
-
-// For Part 2, we'll want to loop and try adding new obstacles
-// We don't want to try thousands of obstacles that we already know we'll never bump into
-// So let's add obstacles from visited positions from Part 1 only
-visited.delete(pos); // (except the starting pos)
-
-let answerp2 = 0;
-let test = 0;
-console.log('Sorry, I haven\'t had time to optimize Part 2 yet.');
-visited.forEach((newObstacle) => {
-    test++;
-    if (test % 250 === 0) console.log(`Testing new obstacle ${test}/${visited.size}.`);
-    const bumpedIntoFromDir = new Set();
-    // One optimization would be to start walking the guard from that obstacle instead. I estimate the improvement to be around 40%
-    // The real optimization would be something like linked list between the obstacles 
-    // Update it for each newObstacle 
-    // And find cycles from newObstacle
-    // But I got other stuff to do
-    obstacles.add(newObstacle);
-    solvePuzzle(pos, direction, obstacles, null, bumpedIntoFromDir);
-    obstacles.delete(newObstacle);
-});
-console.log('answer p2: ' + answerp2);
-console.log('solved in ' + (Date.now() - startTime) + ' ms.');
+walk(p2Set = null, pos, dir, map);
+console.log(`answer part 1: ${answerp1.size}`);
+console.log(`answer part 2: ${answerp2}`);
+console.log(`solved in ${Date.now() - startTime} ms`);
