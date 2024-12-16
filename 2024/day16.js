@@ -51,12 +51,14 @@ function solve(part2) {
             // Evaluate each possible next step
             const newY = y + dy;
             const newX = x + dx;
-            let cost = score;
+            // If already visited in this branch, skip
+            if (part2 && path.has(`${newY},${newX}`)) return;
             // If wall, skip
             if (map[newY][newX] === '#') return;
             // If 180-degree turn, skip
             if (dir[0] * dy + dir[1] * dx === -1) return;
             // Calculate cost of movement
+            let cost = score;
             cost += (dir[0] * dy + dir[1] * dx === 1) ? 1 : 1001;
             // If cost for next position from this direction is too high, skip
             // For part 1, we can do <= instead of <, so we simulate this with cost + 1
