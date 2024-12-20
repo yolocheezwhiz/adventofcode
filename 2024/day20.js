@@ -84,7 +84,7 @@ for (let i = 0; i < trackArr.length - (100 + 2); i++) {
         const xDiff = Math.abs(x - x2);
         const Manhattan = yDiff + xDiff;
         // If Manhattan is 20 or less, and diff is >= 100 + cost of cheat. increment answer
-        if (Manhattan <= 20 && cheatTo - cheatFrom - Manhattan >= 100) answerp2++;
+        if (Manhattan <= 20 && cheatTo - cheatFrom >= 100 + Manhattan) answerp2++;
     }
 }
 
