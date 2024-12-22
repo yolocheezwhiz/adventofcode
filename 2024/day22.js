@@ -9,6 +9,7 @@ const lastDigits = [];
 const bananas = [];
 const keySet = new Set();
 let answerp1 = 0;
+let answerp2 = 0;
 
 function random(num, arr) {
     // Part 1 operations
@@ -36,34 +37,26 @@ const countBananas = new Map();
 lastDigits.forEach(arr => {
     // Keep track of seen patterns to evaluate them once per secret number
     const seen = new Set();
-    // Initialize the first pattern values
-    let [a, b, c, d, e] = [arr[0], arr[1], arr[2], arr[3], arr[4]];
-    // Convert into initial diffs
-    a = b - a;
-    b = c - b;
-    c = d - c;
-    d = e - d;
-    for (let i = 0; i < arr.length - 4; i++) {
-        // Avoid overly scanning the array, shift values instead
-        if (i) {
-            a = b;
-            b = c;
-            c = d;
-            d = arr[i + 4] - arr[i + 3];
-        }
+    const diffs = [];
+    // Build array of diffs
+    for (let i = 0; i < arr.length - 1; i++) diffs.push(arr[i + 1] - arr[i]);
+    // read diffs
+    for (let i = 0; i < diffs.length - 3; i++) {
         // Create string pattern to use as key
-        const key = `${a},${b},${c},${d}`;
+        const key = diffs[i] + diffs[i + 1] * 20 + diffs[i + 2] * 400 + diffs[i + 3] * 8000;
         // Get bananas
         const bananas = arr[i + 4];
         // If it's the first time we see this key for the current secret number
         if (!seen.has(key)) {
             // Remember it
             seen.add(key);
-            // Add bananas to the count for this key
-            countBananas.set(key, (countBananas.get(key) || 0) + bananas);
+            // Add bananas to the count for this key, and eagerly get part 2 answer
+            const sum = (countBananas.get(key) || 0) + bananas;
+            answerp2 = answerp2 > sum ? answerp2 : sum;
+            countBananas.set(key, sum);
         }
     }
 });
 // Get the max banana value
-console.log(`answer part 2: ${Math.max(...countBananas.values())}`);
+console.log(`answer part 2: ${answerp2}`);
 console.log(`solved in ${Date.now() - startTime} ms.`);
