@@ -42,7 +42,7 @@ lastDigits.forEach(arr => {
     for (let i = 0; i < arr.length - 1; i++) diffs.push(arr[i + 1] - arr[i]);
     // read diffs
     for (let i = 0; i < diffs.length - 3; i++) {
-        // Create string pattern to use as key
+        // Convert diffs in a unique int to use as key
         const key = diffs[i] + diffs[i + 1] * 20 + diffs[i + 2] * 400 + diffs[i + 3] * 8000;
         // Get bananas
         const bananas = arr[i + 4];
@@ -57,6 +57,5 @@ lastDigits.forEach(arr => {
         }
     }
 });
-// Get the max banana value
 console.log(`answer part 2: ${answerp2}`);
 console.log(`solved in ${Date.now() - startTime} ms.`);
