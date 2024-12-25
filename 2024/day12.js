@@ -44,6 +44,7 @@ function countStraightLines(edges) {
         [a, b] = edge.split(',');
         let count = 0;
         edges.forEach(edge2 => {
+            if (notACorner) return;
             [a2, b2] = edge2.split(',');
             // If a line and another share their last/first coordinates, they touch
             if (b === a2) {
