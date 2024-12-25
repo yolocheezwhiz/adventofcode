@@ -7,6 +7,7 @@ const dirs = [[-1, 0], [0, 1], [1, 0], [0, -1]];
 const dirs2 = [[-2, 0], [0, 2], [2, 0], [0, -2]]; // Jump through a single wall
 const racetrack = new Map();
 const map = localStorage[day].split('\n').map(line => line.split(''));
+const mapLen = map.length // same for x and y
 let dir = [0, 0]; // Initial state is not moving
 let answerp1 = 0;
 let answerp2 = 0;
@@ -14,15 +15,16 @@ let pico = 0;
 let s, e, x, y;
 
 // Find S and E, and initiate each map key
-for (let y = 0; y < map.length; y++) {
-    for (let x = 0; x < map[0].length; x++) {
+for (let y = 0; y < mapLen; y++) {
+    for (let x = 0; x < mapLen; x++) {
         if (map[y][x] === 'S') {
             s = [y, x];
             // At first I was lazily not storing x and y individually
             // Thinking I could just parse the key itself when reading an entry
             // While true, it slowed down this script about 50x
             // So now we save x and y without being lazy
-            racetrack.set(`${y},${x}`, { picos: pico, x: x, y: y });
+            // Generate unique integer as key
+            racetrack.set(y + x * mapLen, { picos: pico, x: x, y: y });
             pico++;
         }
         if (map[y][x] === 'E') e = [y, x];
@@ -44,7 +46,7 @@ while (true) {
         // We found the next track, set it as new pos
         [y, x, dir] = [newY, newX, [dy, dx]];
         // Save it in the racetrack, along with the picos to get there
-        racetrack.set(`${y},${x}`, { picos: pico, x: x, y: y });
+        racetrack.set(y + x * mapLen, { picos: pico, x: x, y: y });
         pico++;
     });
     // Exit found
@@ -62,7 +64,7 @@ trackArr.forEach(([_, obj]) => {
     dirs2.forEach(([dy, dx]) => {
         const newY = y + dy;
         const newX = x + dx;
-        const cheatTo = racetrack.get(`${newY},${newX}`);
+        const cheatTo = racetrack.get(newY + newX * mapLen);
         // If so and the diff is >= 100 + the cost of the cheat, increment answer
         if (cheatTo && cheatTo.picos - cheatFrom >= 100 + 2) answerp1++;
     });
