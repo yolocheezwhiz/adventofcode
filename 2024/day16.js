@@ -7,28 +7,25 @@ const startTime = Date.now();
 const dirs = [[-1, 0], [0, 1], [1, 0], [0, -1]];
 const yx = {};
 const map = localStorage[day].split('\n').map(line => line.split(''));
+const mapLen = map.length // same for x and y
 let answerp1 = Infinity;
 let answerp2 = new Set();
 let S, E;
 
 // Find S and E, and initiate each map key
-for (let y = 0; y < map.length; y++) {
-    for (let x = 0; x < map[0].length; x++) {
+for (let y = 0; y < mapLen; y++) {
+    for (let x = 0; x < mapLen; x++) {
         if (map[y][x] === 'S') S = [y, x];
         if (map[y][x] === 'E') E = [y, x];
-        if (map[y][x] !== '#') yx[`${y},${x}`] = {
-            '-1,0': Infinity,
-            '0,1': Infinity,
-            '1,0': Infinity,
-            '0,-1': Infinity
-        };
+        // keep keys as integers to speed up processing
+        if (map[y][x] !== '#') yx[y + x * mapLen] = {};
     }
 }
 
 function solve(part2) {
     // DFS will overflow. Have to go with BFS.
     const queue = [];
-    queue.push({ pos: S, dir: [0, 1], score: 0, /* Only care about path for part 2 */ path: part2 ? new Set([`${S[0]},${S[1]}`]) : null });
+    queue.push({ pos: S, dir: [0, 1], score: 0, /* Only care about path for part 2 */ path: part2 ? new Set([S[0] + S[1] * mapLen]) : null });
     while (queue.length) {
         // Check first queue element
         const { pos: [y, x], dir, score, path } = queue.shift();
@@ -51,26 +48,27 @@ function solve(part2) {
             // Evaluate each possible next step
             const newY = y + dy;
             const newX = x + dx;
-            // If already visited in this branch, skip
-            if (part2 && path.has(`${newY},${newX}`)) return;
+                        // If 180-degree turn, skip
+            if (dir[0] * dy + dir[1] * dx === -1) return;
             // If wall, skip
             if (map[newY][newX] === '#') return;
-            // If 180-degree turn, skip
-            if (dir[0] * dy + dir[1] * dx === -1) return;
+            // If already visited in this branch, skip
+            if (part2 && path.has(newY + newX * mapLen)) return;
+
             // Calculate cost of movement
             let cost = score;
             cost += (dir[0] * dy + dir[1] * dx === 1) ? 1 : 1001;
             // If cost for next position from this direction is too high, skip
             // For part 1, we can do <= instead of <, so we simulate this with cost + 1
-            if (yx[`${newY},${newX}`][`${dy},${dx}`] < (part2 ? cost : cost + 1)) return;
+            if (yx[newY + newX * mapLen][dy + dx * mapLen] < (part2 ? cost : cost + 1)) return;
             // Update score
-            yx[`${newY},${newX}`][`${dy},${dx}`] = cost;
+            yx[newY + newX * mapLen][dy + dx * mapLen] = cost;
             // Enqueue next pos
             queue.push({
                 pos: [newY, newX],
                 dir: [dy, dx],
                 score: cost,
-                path: part2 ? new Set([...path, `${newY},${newX}`]) : null
+                path: part2 ? new Set([...path, newY + newX * mapLen]) : null
             });
         });
     }
