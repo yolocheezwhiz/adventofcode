@@ -5,9 +5,9 @@ const startTime = Date.now();
 
 // Day-specific setup
 const dirs = [[-1, 0], [0, 1], [1, 0], [0, -1]];
-const yx = {};
 const map = localStorage[day].split('\n').map(line => line.split(''));
 const mapLen = map.length // same for x and y
+const yx = {};
 let answerp1 = Infinity;
 let answerp2 = new Set();
 let S, E;
@@ -15,68 +15,78 @@ let S, E;
 // Find S and E, and initiate each map key
 for (let y = 0; y < mapLen; y++) {
     for (let x = 0; x < mapLen; x++) {
-        if (map[y][x] === 'S') S = [y, x];
-        if (map[y][x] === 'E') E = [y, x];
-        // keep keys as integers to speed up processing
-        if (map[y][x] !== '#') yx[y + x * mapLen] = {};
-    }
-}
-
-function solve(part2) {
-    // DFS will overflow. Have to go with BFS.
-    const queue = [];
-    queue.push({ pos: S, dir: [0, 1], score: 0, /* Only care about path for part 2 */ path: part2 ? new Set([S[0] + S[1] * mapLen]) : null });
-    while (queue.length) {
-        // Check first queue element
-        const { pos: [y, x], dir, score, path } = queue.shift();
-        // If score is too high, skip
-        if (score > answerp1) continue;
-        // Check if at the end
-        if (y === E[0] && x === E[1]) {
-            // If lowest score, set as best to date
-            if (score < answerp1) {
-                answerp1 = score;
-                // Replace answerp2 with current path
-                if (part2) answerp2 = new Set(path);
-            }
-            // If we reach the best score from a different path, merge paths
-            else if (part2 && score === answerp1) answerp2 = new Set([...answerp2, ...path]);
-            // No need to keep processing since we reached E
-            continue;
+        if (map[y][x] === 'S') {
+            S = [y, x];
+            // We lazily don't create a key in yx for S, so we need to account for it in Part 2's answer
+            // Use unique integers as object keys for faster processing
+            answerp2.add(y + x * mapLen);
         }
-        dirs.forEach(([dy, dx]) => {
-            // Evaluate each possible next step
-            const newY = y + dy;
-            const newX = x + dx;
-                        // If 180-degree turn, skip
-            if (dir[0] * dy + dir[1] * dx === -1) return;
-            // If wall, skip
-            if (map[newY][newX] === '#') return;
-            // If already visited in this branch, skip
-            if (part2 && path.has(newY + newX * mapLen)) return;
-
-            // Calculate cost of movement
-            let cost = score;
-            cost += (dir[0] * dy + dir[1] * dx === 1) ? 1 : 1001;
-            // If cost for next position from this direction is too high, skip
-            // For part 1, we can do <= instead of <, so we simulate this with cost + 1
-            if (yx[newY + newX * mapLen][dy + dx * mapLen] < (part2 ? cost : cost + 1)) return;
-            // Update score
-            yx[newY + newX * mapLen][dy + dx * mapLen] = cost;
-            // Enqueue next pos
-            queue.push({
-                pos: [newY, newX],
-                dir: [dy, dx],
-                score: cost,
-                path: part2 ? new Set([...path, newY + newX * mapLen]) : null
-            });
-        });
+        if (map[y][x] === 'E') E = [y, x];
     }
 }
-// Both parts could be solved in one go, but it's faster to get answer from part 1 without path tracking
-solve();
-// And then the rule score > answerp1 is going to be more efficient during part 2
-solve(true);
+
+// Part 1
+const queue = [];
+queue.push({ pos: S, dir: [0, 1], score: 0 });
+while (queue.length) {
+    const { pos: [y, x], dir, score } = queue.shift();
+    // Check if we've reached the end
+    if (y === E[0] && x === E[1]) {
+        // If lower score, set as the best so far
+        if (score < answerp1) answerp1 = score;
+        continue;
+    }
+    // Skip when too far from answer at a too high cost
+    const yManhattan = Math.abs(E[0] - y);
+    const xManhattan = Math.abs(E[1] - x);
+    const atLeastOneTurn = yManhattan && xManhattan ? 1000 : 0;
+    if (score + yManhattan + xManhattan + atLeastOneTurn >= answerp1) continue;
+    // Try every dir
+    dirs.forEach(([dy, dx]) => {
+        // Calculate next position
+        const newY = y + dy;
+        const newX = x + dx;
+        const nk = newY + newX * mapLen;
+        const dk = dy + dx * mapLen;
+        // Skip if 180-degree turn
+        if (dir[0] * dy + dir[1] * dx === -1) return;
+        // Skip if wall
+        if (map[newY][newX] === '#') return;
+        // Calculate the cost of movement
+        let cost = score;
+        cost += (dir[0] * dy + dir[1] * dx === 1) ? 1 : 1001;
+        // If cost exceeds current path, skip
+        if (yx[nk]?.[dk] <= cost) return;
+        // Update cost to make it to this pos from this dir
+        yx[nk] ||= {};
+        yx[nk][dk] = cost;
+        // Enqueue next position
+        queue.push({ pos: [newY, newX], dir: [dy, dx], score: cost });
+    });
+}
+
+// We now have part 1's answer, and an object (yx) representing best costs per position per dir. 
+// We walk backward from E to S
+queue.push({ pos: E, score: answerp1 });
+while (queue.length) {
+    const { pos: [y, x], score } = queue.shift();
+    // Add pos to answer since it passed all checks
+    answerp2.add(y + x * mapLen);
+    // Try every dir
+    dirs.forEach(([dy, dx]) => {
+        const newY = y + dy;
+        const newX = x + dx;
+        const nk = newY + newX * mapLen;
+        // Check if pos was evaluated in part 1
+        const neighbor = yx[nk];
+        let nCosts;
+        // If so, Get the values for every dir
+        if (neighbor) nCosts = Object.values(yx[nk]);
+        // If any delta matches -1 or -1001, pos is valid, add to queue
+        if (nCosts?.some(cost => cost === score - 1)) queue.push({ pos: [newY, newX], dir: [dy, dx], score: score - 1 });
+        else if (nCosts?.some(cost => cost === score - 1001)) queue.push({ pos: [newY, newX], dir: [dy, dx], score: score - 1001 });
+    });
+}
 console.log(`Answer Part 1: ${answerp1}`);
 console.log(`Answer Part 2: ${answerp2.size}`);
 console.log(`Solved in ${Date.now() - startTime} ms.`);
