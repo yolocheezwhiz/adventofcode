@@ -4,7 +4,8 @@ localStorage[day] = localStorage[day] || (await(await fetch("https://adventofcod
 const startTime = Date.now();
 
 // Day-specific setup
-let map = localStorage[day].split('\n').map(line => line.split(''));
+const map = localStorage[day].split('\n').map(line => line.split(''));
+const mapLen = map.length // same for x and y
 let answerp1 = 0;
 let answerp2 = 0;
 const dirs = [[-1, 0], [1, 0], [0, -1], [0, 1]];
@@ -12,7 +13,7 @@ const dirs = [[-1, 0], [1, 0], [0, -1], [0, 1]];
 function fence(y, x, posValue, region, edges) {
     let neighbors = 0;
     // Set the plot as visited
-    region[`${y}_${x}`] = 0
+    region[y + x * mapLen] = 0
     // Check plots up, down, left, right
     dirs.forEach(([dy, dx]) => {
         const yy = y + dy;
@@ -22,7 +23,7 @@ function fence(y, x, posValue, region, edges) {
             // Add to neighbor count
             neighbors++;
             // Recursively check the neighboring plot if not visited already
-            if (isNaN(region[`${yy}_${xx}`])) fence(yy, xx, posValue, region, edges);
+            if (isNaN(region[yy + xx * mapLen])) fence(yy, xx, posValue, region, edges);
         } 
         // If the plot is not of the same type (or is out of bound), draw a line there for part 2
         // use dy as condition to know if the line should be horizontal or vertical
@@ -30,7 +31,7 @@ function fence(y, x, posValue, region, edges) {
         else edges.add(`${yy - 0.5}_${xx - 0.5 * dx},${yy + 0.5}_${xx - 0.5 * dx}`);
     });
     // Set the amount of neighboring plot of the same type for the current position
-    region[`${y}_${x}`] = neighbors;
+    region[y + x * mapLen] = neighbors;
     return;
 }
 
@@ -70,6 +71,7 @@ function countStraightLines(edges) {
     });
     return straightLines;
 }
+
 // Walk the map
 map.forEach((line, y) => line.forEach((val, x) => {
     const region = {};
@@ -85,7 +87,8 @@ map.forEach((line, y) => line.forEach((val, x) => {
         // The perimeter is 4 minus neighbors for every plot
         perimeter += 4 - neighbors;
         // To prevent evaluating them again, we set the visited plots on fire!!!!!!!!!!!!!!!
-        let [yy, xx] = pos.split('_');
+        xx = Math.floor(+pos / mapLen);
+        yy = pos - (xx * mapLen);
         map[yy][xx] = '.';
     });
     answerp1 += perimeter * area;
