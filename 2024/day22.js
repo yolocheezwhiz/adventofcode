@@ -11,16 +11,16 @@ const keySet = new Set();
 let answerp1 = 0;
 let answerp2 = 0;
 
-function random(num, arr) {
-    // Part 1 operations
+function random(n, arr) {
     for (let i = 0; i < 2000; i++) {
-        step1 = ((num ^ (num * 64)) >>> 0) % 16777216;
-        step2 = ((step1 ^ Math.floor(step1 / 32)) >>> 0) % 16777216;
-        num = ((step2 ^ (step2 * 2048)) >>> 0) % 16777216;
-        // Keep track of the results last digit for part 2
-        arr.push(num % 10);
+        // Part 1 (simplified) operations
+          n = (n ^ (n << 6)) & 0xFFFFFF;
+          n = (n ^ (n >> 5)) & 0xFFFFFF; 
+          n = (n ^ (n << 11)) & 0xFFFFFF; 
+        // Push the last digit to the array
+        arr.push(n % 10); 
     }
-    return num;
+    return n;
 }
 
 // Eval each secret number
