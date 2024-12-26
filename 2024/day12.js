@@ -39,22 +39,21 @@ function fence(y, x, posValue, region, edges) {
 // Count line junctions that are going straight
 function countStraightLines(edges) {
     let straightLines = 0;
-    const edgesArr = Array.from(edges);
-    for (let i = 0; i < edgesArr.length; i++) {
-        let notACorner = false;
-        const [a, b] = edgesArr[i].split(',');
+    edges.forEach(edge => {
+        let notACorner;
+        const [a, b] = edge.split(',');
         let count = 0;
-        for (let j = i + 1; j < edgesArr.length; j++) {
-            const [a2, b2] = edgesArr[j].split(',');
+        edges.forEach(edge2 => {
+            const [a2, b2] = edge2.split(',');
             // If a line and another share their last/first coordinates, they touch
-            if (b === a2 || a === b2) {
+            if (b === a2) {
                 count++;
                 const [y, x] = a.split('_');
                 const [y2, x2] = b2.split('_');
                 // If one of their x or y position is the same, the line is straight
                 if (y === y2 || x === x2) notACorner = true;
             }
-        }
+        });
         // False positives are possible when a line touches more than one line, so we add the && count === 1 condition
         // e.g. If we were to draw lines here
         // A would be a single area
@@ -69,7 +68,7 @@ function countStraightLines(edges) {
         AAAA
         */
         if (notACorner && count === 1) straightLines += 1;
-    }
+    });
     return straightLines;
 }
 
@@ -88,8 +87,8 @@ map.forEach((line, y) => line.forEach((val, x) => {
         // The perimeter is 4 minus neighbors for every plot
         perimeter += 4 - neighbors;
         // To prevent evaluating them again, we set the visited plots on fire!!!!!!!!!!!!!!!
-        xx = Math.floor(+pos / mapLen);
-        yy = pos - (xx * mapLen);
+        const yy = pos % mapLen;
+        const xx = (pos - yy) / mapLen;
         map[yy][xx] = '.';
     });
     answerp1 += perimeter * area;
