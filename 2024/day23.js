@@ -7,13 +7,16 @@ const startTime = Date.now();
 // Sort pairs right away, allowing for less validation cases during part 1
 const records = localStorage[day].split('\n').map(line => line.split('-').sort());
 const answerp1 = new Set();
-const computers = new Set();
-const profiles = {};
+const profiles = new Map();
+let computers = new Set();
 let answerp2;
 
-// Part 1
 // For each pair
 for (let [a, b] of records) {
+    // Build profiles (computer:[connections]), and a list of computers for part 2
+    profiles.set(a, [...(profiles.get(a) || []), b]);
+    profiles.set(b, [...(profiles.get(b) || []), a]);
+    computers.add(a).add(b);
     // Only consider the starting pair where a value starts with t
     if (a.startsWith('t') || b.startsWith('t')) {
         // Check all other pairs
@@ -41,48 +44,24 @@ for (let [a, b] of records) {
 }
 
 // Part 2
-// For each record
-records.forEach(([a, b]) => {
-    // Build a set of computers
-    computers.add(a).add(b);
-    // Build profiles (computer + all their connections)
-    (profiles[a] ||= new Set([a])).add(b), (profiles[b] ||= new Set([b])).add(a);
+computers = Array.from(computers);
+// Create a list of interconnected computers
+const networks = computers.map(computer => {
+    // Get the computers connected to the current computer
+    const connectedComputers = profiles.get(computer);
+    // For each connected computer, build a network of mutual connections
+    return connectedComputers.flatMap(nextComputer => {
+        // Get the next computer's connections and filter those that are mutual with the current computer
+        return [computer, ...profiles.get(nextComputer).filter(nextNextComputer => profiles.get(nextNextComputer).includes(computer))];
+    // Filter out duplicates and ensure valid network connections
+    }).filter((computer, i, arr) => arr.indexOf(computer) === i && arr.every(otherComputer => otherComputer === computer || profiles.get(otherComputer).includes(computer)));
 });
 
-const computerArr = Array.from(computers);
-let stop;
-// Observation shows us that each computer has 13 connections, forming clusters of size 14
-// No cluster is exactly the same
-// Hypothesis is that they all have one 'bad connection' each, and that the final cluster is of size 13
-// We'll test this hypothesis
-for (let computer of computerArr) {
-    // If answer has already been found, stop
-    if (stop) break;
-    // for each profile
-    Object.values(profiles).forEach(profile1 => {
-        // If answer has already been found, stop
-        if (stop) return;
-        let count = 0;
-        // remove a computer
-        if (!profile1.has(computer)) return;
-        const clone = new Set(profile1);
-        clone.delete(computer);
-        const profile1Arr = Array.from(clone);
-        // Check if this cluster of size 13 is found in other clusters
-        Object.values(profiles).forEach(profile2 => {
-            const profile2Arr = Array.from(profile2);
-            // If so, increment count
-            if (profile1Arr.every(element => profile2Arr.includes(element))) count++;
-        });
-        // If there are 13 clusters sharing the same 13 computers, we found the answer
-        if (count === 13) {
-            answerp2 = profile1Arr.sort().join(',');
-            stop = true;
-        }
-        // It works, good enough. Merry pre-Christmas
-        // No need to implement that looks for partial matches of any size
-    });
-}
+// Find the largest network
+answerp2 = networks.reduce((max, currentNetwork) =>
+    currentNetwork.length > max.length ? currentNetwork : max
+).sort().join(',');
+
 console.log(`answer part 1: ${answerp1.size}`);
 console.log(`answer part 2: ${answerp2}`);
 console.log(`solved in ${Date.now() - startTime} ms.`);
