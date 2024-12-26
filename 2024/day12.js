@@ -24,11 +24,14 @@ function fence(y, x, posValue, region, edges) {
             neighbors++;
             // Recursively check the neighboring plot if not visited already
             if (isNaN(region[yy + xx * mapLen])) fence(yy, xx, posValue, region, edges);
-        } 
+        }
         // If the plot is not of the same type (or is out of bound), draw a line there for part 2
         // use dy as condition to know if the line should be horizontal or vertical
-        else if (dy) edges.add(`${yy - 0.5 * dy}_${xx - 0.5},${yy - 0.5 * dy}_${xx + 0.5}`);
-        else edges.add(`${yy - 0.5}_${xx - 0.5 * dx},${yy + 0.5}_${xx - 0.5 * dx}`);
+        else edges.add(
+            dy
+                ? [[yy - 0.5 * dy, xx - 0.5], [yy - 0.5 * dy, xx + 0.5]]
+                : [[yy - 0.5, xx - 0.5 * dx], [yy + 0.5, xx - 0.5 * dx]]
+        );
     });
     // Set the amount of neighboring plot of the same type for the current position
     region[y + x * mapLen] = neighbors;
@@ -41,15 +44,15 @@ function countStraightLines(edges) {
     let straightLines = 0;
     edges.forEach(edge => {
         let notACorner;
-        const [a, b] = edge.split(',');
+        const [a, b] = edge;
         let count = 0;
         edges.forEach(edge2 => {
-            const [a2, b2] = edge2.split(',');
+            const [a2, b2] = edge2;
             // If a line and another share their last/first coordinates, they touch
-            if (b === a2) {
+            if (b[0] === a2[0] && b[1] === a2[1]) {
                 count++;
-                const [y, x] = a.split('_');
-                const [y2, x2] = b2.split('_');
+                const [y, x] = a;
+                const [y2, x2] = b2;
                 // If one of their x or y position is the same, the line is straight
                 if (y === y2 || x === x2) notACorner = true;
             }
