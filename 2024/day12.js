@@ -38,23 +38,23 @@ function fence(y, x, posValue, region, edges) {
 // For part 2, let's keep it simple
 // Count line junctions that are going straight
 function countStraightLines(edges) {
-    straightLines = 0;
-    edges.forEach(edge => {
-        let notACorner;
-        [a, b] = edge.split(',');
+    let straightLines = 0;
+    const edgesArr = Array.from(edges);
+    for (let i = 0; i < edgesArr.length; i++) {
+        let notACorner = false;
+        const [a, b] = edgesArr[i].split(',');
         let count = 0;
-        edges.forEach(edge2 => {
-            if (notACorner) return;
-            [a2, b2] = edge2.split(',');
+        for (let j = i + 1; j < edgesArr.length; j++) {
+            const [a2, b2] = edgesArr[j].split(',');
             // If a line and another share their last/first coordinates, they touch
-            if (b === a2) {
+            if (b === a2 || a === b2) {
                 count++;
-                [y, x] = a.split('_');
-                [y2, x2] = b2.split('_');
+                const [y, x] = a.split('_');
+                const [y2, x2] = b2.split('_');
                 // If one of their x or y position is the same, the line is straight
                 if (y === y2 || x === x2) notACorner = true;
             }
-        });
+        }
         // False positives are possible when a line touches more than one line, so we add the && count === 1 condition
         // e.g. If we were to draw lines here
         // A would be a single area
@@ -69,7 +69,7 @@ function countStraightLines(edges) {
         AAAA
         */
         if (notACorner && count === 1) straightLines += 1;
-    });
+    }
     return straightLines;
 }
 
