@@ -21,6 +21,23 @@ else:
     with open(cache_file, 'w') as f:
         f.write(input_text)
 
+def merge_clusters(clusters):
+    # Merge overlapping clusters until no more changes occur
+    while True:
+        prev_count = len(clusters)
+        new_clusters = []
+        for cluster in clusters:
+            for existing in new_clusters:
+                if cluster & existing:
+                    existing.update(cluster)
+                    break
+            else:
+                new_clusters.append(cluster)
+        clusters = new_clusters
+        if len(clusters) == prev_count:
+            break
+    return clusters
+
 current_datetime = datetime.now()
 lines = input_text.split('\n')
 edges_and_distances = {}
@@ -49,28 +66,12 @@ top_values = dict(list(itertools.islice(sorted_edges_and_distances.items(), N)))
 top_keys_split = [key.split(',') for key in top_values.keys()]
 # Build clusters
 clusters = [{k1, k2} for [k1, k2] in top_keys_split]
-
-while True:
-    prev_count = len(clusters)
-    new_clusters = []
-    # Compare clusters to one another
-    # If a pos exists in another cluster, merge the clusters
-    for cluster in clusters:
-        for existing in new_clusters:
-            if cluster & existing:
-                existing.update(cluster)
-                break
-        else:
-            new_clusters.append(cluster)
-    clusters = new_clusters
-    # Loop until clusters stop mutating
-    if len(clusters) == prev_count:
-        break
+clusters = merge_clusters(clusters)
 # Sort the output by cluster length descending, keep the top 3 elements
 sorted_lengths = sorted([len(cluster) for cluster in clusters], reverse=True)[:3]
 # Multiply lengths together
 print(f'Answer part 1: {math.prod(sorted_lengths)}')
-# Part 2: Start by re-using {"pos1_index,pos2_index": distance } edges_and_distancesect sorted by distance from Part 1
+# Part 2: Start by re-using {"pos1_index,pos2_index": distance } edges_and_distances object sorted by distance from Part 1
 connections = sorted_edges_and_distances.keys()
 target_cluster_size = len(lines)
 clusters = []
@@ -80,19 +81,7 @@ last_connection = None
 for connection in connections:
     k1, k2 = map(int, connection.split(','))
     clusters.append({k1, k2})
-    # Loop until clusters stop mutating
-    while True:
-        new_clusters = []
-        for cluster in clusters:
-            for existing in new_clusters:
-                if cluster & existing:
-                    existing.update(cluster)
-                    break
-            else:
-                new_clusters.append(cluster)
-        clusters = new_clusters
-        if len(new_clusters) == len(clusters):
-            break
+    clusters = merge_clusters(clusters)
     # We break when we have a single cluster that contains all coordinates
     if len(clusters) == 1 and len(clusters[0]) == target_cluster_size:
         last_connection = connection
